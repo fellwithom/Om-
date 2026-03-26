@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ADAM AI - Maths</title>
+<title>ADAM AI - Global Quiz</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
 
@@ -16,7 +16,7 @@ body {
     overflow: hidden;
 }
 
-/* CENTER GLASS */
+/* CENTER */
 .center {
     height: 100vh;
     display: flex;
@@ -24,6 +24,7 @@ body {
     align-items: center;
 }
 
+/* GLASS UI */
 .glass {
     padding: 30px;
     border-radius: 20px;
@@ -31,7 +32,7 @@ body {
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255,255,255,0.2);
     text-align: center;
-    width: 300px;
+    width: 320px;
 }
 
 /* INPUT */
@@ -56,7 +57,7 @@ input {
     transition: 0.3s;
 }
 
-.option:hover, .btn:hover {
+.btn:hover, .option:hover {
     background: white;
     color: black;
     transform: scale(1.1);
@@ -100,11 +101,181 @@ canvas {
 
 <!-- LEADERBOARD -->
 <div id="leaderboard" class="glass hidden">
-    <h2>🏆 Leaderboard</h2>
+    <h2>🏆 Global Leaderboard</h2>
     <div id="list"></div>
     <div class="btn" onclick="location.reload()">Restart</div>
 </div>
 
+</div>
+
+<canvas id="canvas"></canvas>
+
+<!-- 🔥 FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
+<script>
+
+/* 🔥 PUT YOUR FIREBASE CONFIG HERE */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* QUESTIONS */
+const questions = [
+    {q:"5 + 7 = ?", options:[10,11,12,13], answer:12},
+    {q:"9 × 3 = ?", options:[18,27,21,24], answer:27},
+    {q:"15 - 6 = ?", options:[9,7,8,10], answer:9},
+    {q:"12 ÷ 4 = ?", options:[2,3,4,6], answer:3},
+    {q:"7 × 6 = ?", options:[36,42,40,48], answer:42}
+];
+
+let index = 0;
+let score = 0;
+let username = "";
+
+/* START */
+function start(){
+    username = document.getElementById("username").value;
+
+    if(username.trim()==""){
+        alert("Enter name 😏");
+        return;
+    }
+
+    document.getElementById("intro").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+
+    loadQuestion();
+}
+
+/* LOAD QUESTION */
+function loadQuestion(){
+    let q = questions[index];
+    document.getElementById("question").innerText = q.q;
+
+    let optDiv = document.getElementById("options");
+    optDiv.innerHTML = "";
+
+    q.options.forEach(opt=>{
+        let btn = document.createElement("div");
+        btn.className="option";
+        btn.innerText=opt;
+        btn.onclick=()=>check(opt);
+        optDiv.appendChild(btn);
+    });
+}
+
+/* CHECK ANSWER */
+function check(ans){
+    if(ans === questions[index].answer){
+        score += 10;
+    }
+
+    index++;
+
+    if(index < questions.length){
+        loadQuestion();
+    } else {
+        finish();
+    }
+}
+
+/* FINISH */
+function finish(){
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("score").innerText = score;
+
+    saveScore();
+}
+
+/* SAVE TO FIREBASE */
+function saveScore(){
+    db.collection("leaderboard").add({
+        name: username,
+        score: score
+    });
+}
+
+/* SHOW LEADERBOARD */
+function showLeaderboard(){
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("leaderboard").classList.remove("hidden");
+
+    db.collection("leaderboard")
+    .orderBy("score","desc")
+    .limit(10)
+    .get()
+    .then(snapshot=>{
+        let list = document.getElementById("list");
+        list.innerHTML="";
+
+        snapshot.forEach(doc=>{
+            let data = doc.data();
+            let div = document.createElement("div");
+            div.innerText = data.name + " - " + data.score;
+            list.appendChild(div);
+        });
+    });
+}
+
+/* 🌌 FLOATING LINES BACKGROUND */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let lines = [];
+
+for(let i=0;i<40;i++){
+    lines.push({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height,
+        length:Math.random()*100+50,
+        angle:Math.random()*Math.PI,
+        speed:(Math.random()-0.5)*0.01,
+        moveX:(Math.random()-0.5)*0.5,
+        moveY:(Math.random()-0.5)*0.5
+    });
+}
+
+function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    lines.forEach(l=>{
+        l.angle+=l.speed;
+        l.x+=l.moveX;
+        l.y+=l.moveY;
+
+        if(l.x<0||l.x>canvas.width) l.moveX*=-1;
+        if(l.y<0||l.y>canvas.height) l.moveY*=-1;
+
+        let x2=l.x+Math.cos(l.angle)*l.length;
+        let y2=l.y+Math.sin(l.angle)*l.length;
+
+        ctx.strokeStyle="rgba(255,255,255,0.2)";
+        ctx.beginPath();
+        ctx.moveTo(l.x,l.y);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
 </div>
 
 <canvas id="canvas"></canvas>
