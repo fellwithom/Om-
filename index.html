@@ -3,252 +3,251 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ADAM AI</title>
+<title>ADAM AI GLOBAL QUIZ</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
 
 <style>
-body {
-    margin: 0;
-    background: #000;
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    overflow: hidden;
+body{
+margin:0;
+background:#000;
+color:white;
+font-family:'Poppins';
+overflow:hidden;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
-/* CENTER */
-.center {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.glass{
+padding:30px;
+border-radius:20px;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(15px);
+border:1px solid rgba(255,255,255,0.2);
+text-align:center;
+width:320px;
 }
 
-/* GLASS UI */
-.glass {
-    padding: 30px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.2);
-    text-align: center;
-    width: 320px;
+input{
+padding:10px;
+border-radius:20px;
+border:none;
+width:80%;
+text-align:center;
+background:rgba(255,255,255,0.1);
+color:white;
 }
 
-/* INPUT */
-input {
-    width: 80%;
-    padding: 10px;
-    border-radius: 20px;
-    border: none;
-    text-align: center;
-    background: rgba(255,255,255,0.1);
-    color: white;
+.btn,.option{
+margin-top:15px;
+padding:10px 20px;
+border-radius:20px;
+cursor:pointer;
+border:1px solid rgba(255,255,255,0.2);
+background:rgba(255,255,255,0.05);
+transition:0.3s;
 }
 
-/* BUTTON */
-.btn, .option {
-    margin-top: 15px;
-    padding: 10px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    transition: 0.3s;
+.btn:hover,.option:hover{
+background:white;
+color:black;
+transform:scale(1.1);
 }
 
-.btn:hover, .option:hover {
-    background: white;
-    color: black;
-    transform: scale(1.1);
-}
+.hidden{display:none;}
 
-/* HIDE */
-.hidden { display: none; }
-
-/* CANVAS */
-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
+canvas{
+position:fixed;
+top:0;
+left:0;
+z-index:-1;
 }
 </style>
 </head>
 
 <body>
 
-<div class="center">
-
 <!-- INTRO -->
 <div id="intro" class="glass">
-    <h2>Hey! I'm Adam</h2>
-    <input id="username" placeholder="Enter your name">
-    <div class="btn" onclick="start()">START 🚀</div>
+<h2>Hey! I'm Adam</h2>
+<input id="username" placeholder="Enter your name">
+<div class="btn" onclick="start()">START 🚀</div>
 </div>
 
 <!-- QUIZ -->
 <div id="quiz" class="glass hidden">
-    <h3 id="question"></h3>
-    <div id="options"></div>
+<h3 id="question"></h3>
+<div id="options"></div>
 </div>
 
 <!-- RESULT -->
 <div id="result" class="glass hidden">
-    <h2>Your Score: <span id="score"></span></h2>
-    <div class="btn" onclick="showLeaderboard()">View Leaderboard</div>
+<h2>Your Score: <span id="score"></span></h2>
+<div class="btn" onclick="showLeaderboard()">View Leaderboard</div>
 </div>
 
 <!-- LEADERBOARD -->
 <div id="leaderboard" class="glass hidden">
-    <h2>🏆 Leaderboard (This Device)</h2>
-    <div id="list"></div>
-    <div class="btn" onclick="location.reload()">Restart</div>
-</div>
-
+<h2>🏆 Global Leaderboard</h2>
+<div id="list"></div>
+<div class="btn" onclick="location.reload()">Restart</div>
 </div>
 
 <canvas id="canvas"></canvas>
 
-<script>
+<!-- 🔥 FIREBASE + LOGIC -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } 
+from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+/* 🔥 TERA FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyCXmSCjrnjZmJGDsOgO14_qZu3p_ljor78",
+  authDomain: "om-bachhav.firebaseapp.com",
+  projectId: "om-bachhav",
+  storageBucket: "om-bachhav.firebasestorage.app",
+  messagingSenderId: "540200596260",
+  appId: "1:540200596260:web:6ab84006cfdfa21ebb79b1",
+  measurementId: "G-0PXN7K0X6H"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 /* QUESTIONS */
-const questions = [
-    {q:"5 + 7 = ?", options:[10,11,12,13], answer:12},
-    {q:"9 × 3 = ?", options:[18,27,21,24], answer:27},
-    {q:"15 - 6 = ?", options:[9,7,8,10], answer:9},
-    {q:"12 ÷ 4 = ?", options:[2,3,4,6], answer:3},
-    {q:"7 × 6 = ?", options:[36,42,40,48], answer:42}
+const questions=[
+{q:"5 + 7 = ?",o:[10,11,12,13],a:12},
+{q:"9 × 3 = ?",o:[18,27,21,24],a:27},
+{q:"15 - 6 = ?",o:[9,7,8,10],a:9},
+{q:"12 ÷ 4 = ?",o:[2,3,4,6],a:3},
+{q:"7 × 6 = ?",o:[36,42,40,48],a:42}
 ];
 
-let index = 0;
-let score = 0;
-let username = "";
+let index=0,score=0,username="";
 
 /* START */
-function start(){
-    username = document.getElementById("username").value;
+window.start=function(){
+username=document.getElementById("username").value;
 
-    if(username.trim()==""){
-        alert("Enter name 😏");
-        return;
-    }
-
-    document.getElementById("intro").classList.add("hidden");
-    document.getElementById("quiz").classList.remove("hidden");
-
-    loadQuestion();
+if(username.trim()==""){
+alert("Enter name 😏");
+return;
 }
 
-/* LOAD QUESTION */
+intro.classList.add("hidden");
+quiz.classList.remove("hidden");
+
+loadQuestion();
+}
+
+/* LOAD */
 function loadQuestion(){
-    let q = questions[index];
-    document.getElementById("question").innerText = q.q;
+let q=questions[index];
+question.innerText=q.q;
 
-    let optDiv = document.getElementById("options");
-    optDiv.innerHTML = "";
+options.innerHTML="";
 
-    q.options.forEach(opt=>{
-        let btn = document.createElement("div");
-        btn.className="option";
-        btn.innerText=opt;
-        btn.onclick=()=>check(opt);
-        optDiv.appendChild(btn);
-    });
+q.o.forEach(opt=>{
+let div=document.createElement("div");
+div.className="option";
+div.innerText=opt;
+div.onclick=()=>check(opt);
+options.appendChild(div);
+});
 }
 
 /* CHECK */
 function check(ans){
-    if(ans === questions[index].answer){
-        score += 10;
-    }
+if(ans===questions[index].a) score+=10;
 
-    index++;
+index++;
 
-    if(index < questions.length){
-        loadQuestion();
-    } else {
-        finish();
-    }
+if(index<questions.length){
+loadQuestion();
+}else{
+finish();
+}
 }
 
 /* FINISH */
-function finish(){
-    document.getElementById("quiz").classList.add("hidden");
-    document.getElementById("result").classList.remove("hidden");
-    document.getElementById("score").innerText = score;
+async function finish(){
+quiz.classList.add("hidden");
+result.classList.remove("hidden");
+scoreDisplay.innerText=score;
 
-    saveScore();
-}
-
-/* LOCAL STORAGE SAVE */
-function saveScore(){
-    let data = JSON.parse(localStorage.getItem("leaderboard")) || [];
-    data.push({name: username, score: score});
-    localStorage.setItem("leaderboard", JSON.stringify(data));
+/* SAVE GLOBAL */
+await addDoc(collection(db,"scores"),{
+name:username,
+score:score
+});
 }
 
 /* SHOW LEADERBOARD */
-function showLeaderboard(){
-    document.getElementById("result").classList.add("hidden");
-    document.getElementById("leaderboard").classList.remove("hidden");
+window.showLeaderboard=async function(){
 
-    let data = JSON.parse(localStorage.getItem("leaderboard")) || [];
-    data.sort((a,b)=>b.score-a.score);
+result.classList.add("hidden");
+leaderboard.classList.remove("hidden");
 
-    let list = document.getElementById("list");
-    list.innerHTML="";
+let qy=query(collection(db,"scores"),orderBy("score","desc"),limit(10));
+let snap=await getDocs(qy);
 
-    data.slice(0,10).forEach(d=>{
-        let div = document.createElement("div");
-        div.innerText = d.name + " - " + d.score;
-        list.appendChild(div);
-    });
+list.innerHTML="";
+
+snap.forEach(doc=>{
+let d=doc.data();
+let div=document.createElement("div");
+div.innerText=d.name+" - "+d.score;
+list.appendChild(div);
+});
 }
 
-/* 🌌 FLOATING LINES BACKGROUND */
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+/* BACKGROUND LINES */
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+canvas.width=innerWidth;
+canvas.height=innerHeight;
 
-let lines = [];
+let lines=[];
 
 for(let i=0;i<40;i++){
-    lines.push({
-        x:Math.random()*canvas.width,
-        y:Math.random()*canvas.height,
-        length:Math.random()*100+50,
-        angle:Math.random()*Math.PI,
-        speed:(Math.random()-0.5)*0.01,
-        moveX:(Math.random()-0.5)*0.5,
-        moveY:(Math.random()-0.5)*0.5
-    });
+lines.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height,
+length:Math.random()*100+50,
+angle:Math.random()*Math.PI,
+speed:(Math.random()-0.5)*0.01,
+moveX:(Math.random()-0.5)*0.5,
+moveY:(Math.random()-0.5)*0.5
+});
 }
 
 function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    lines.forEach(l=>{
-        l.angle+=l.speed;
-        l.x+=l.moveX;
-        l.y+=l.moveY;
+lines.forEach(l=>{
+l.angle+=l.speed;
+l.x+=l.moveX;
+l.y+=l.moveY;
 
-        if(l.x<0||l.x>canvas.width) l.moveX*=-1;
-        if(l.y<0||l.y>canvas.height) l.moveY*=-1;
+if(l.x<0||l.x>canvas.width) l.moveX*=-1;
+if(l.y<0||l.y>canvas.height) l.moveY*=-1;
 
-        let x2=l.x+Math.cos(l.angle)*l.length;
-        let y2=l.y+Math.sin(l.angle)*l.length;
+let x2=l.x+Math.cos(l.angle)*l.length;
+let y2=l.y+Math.sin(l.angle)*l.length;
 
-        ctx.strokeStyle="rgba(255,255,255,0.2)";
-        ctx.beginPath();
-        ctx.moveTo(l.x,l.y);
-        ctx.lineTo(x2,y2);
-        ctx.stroke();
-    });
+ctx.strokeStyle="rgba(255,255,255,0.2)";
+ctx.beginPath();
+ctx.moveTo(l.x,l.y);
+ctx.lineTo(x2,y2);
+ctx.stroke();
+});
 
-    requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 }
 
 animate();
@@ -256,4 +255,4 @@ animate();
 </script>
 
 </body>
-</html>
+    </html>
